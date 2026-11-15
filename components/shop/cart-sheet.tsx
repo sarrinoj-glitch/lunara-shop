@@ -55,7 +55,7 @@ export function CartSheet() {
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
             <div className="arch grid h-40 w-28 place-items-center bg-sand">
-              <span className="accent-serif text-5xl text-terracotta">А</span>
+              <span className="accent-serif text-5xl text-terracotta">L</span>
             </div>
             <p className="display text-2xl">{t.cart.emptyTitle}</p>
             <p className="text-sm text-muted-foreground">{t.cart.emptyText}</p>

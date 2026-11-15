@@ -116,7 +116,7 @@ export function orderText(o: OrderFull, isNew = false) {
 
 export function orderKeyboard(o: { id: string; customer_phone: string; number: number }) {
   const phone = o.customer_phone.replace(/\D/g, '')
-  const hello = encodeURIComponent(`Здравствуйте! Это магазин АМБРА, по вашему заказу №${o.number} 🌿`)
+  const hello = encodeURIComponent(`Здравствуйте! Это магазин LUNARA, по вашему заказу №${o.number} 🌿`)
   return new InlineKeyboard()
     .url(B.orders.write, `https://wa.me/${phone}?text=${hello}`)
     .row()

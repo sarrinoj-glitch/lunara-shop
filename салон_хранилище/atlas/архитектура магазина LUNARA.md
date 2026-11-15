@@ -3,7 +3,7 @@ tags: [atlas, architecture]
 date: 2026-11-15
 ---
 
-# Архитектура магазина АМБРА
+# Архитектура магазина LUNARA
 
 ```
 Покупательница → Next.js 16 (Vercel) ──use cache/cacheTag──► Supabase (Postgres + Storage)
@@ -20,4 +20,4 @@ date: 2026-11-15
 - **Next.js 16:** ломающие изменения. Error boundary получает `retry`, а не `reset`; `revalidateTag(tag, 'max')`; типы `PageProps`/`LayoutProps` генерирует `next typegen`.
 - **Документы:** `docs/PROJECT_IDEA.md`, `docs/SPEC.md`, `docs/DEPLOY.md`, `docs/ИНСТРУКЦИЯ_ДЛЯ_ВЛАДЕЛИЦЫ.md`.
 
-Решения: [[админка магазина — Telegram-бот, а не веб-панель]], [[заказы уходят в WhatsApp ссылкой wa.me и дублируются в бот]], [[дизайн АМБРА — редакционный бутик в терракоте с мотивом арки]].
+Решения: [[админка магазина — Telegram-бот, а не веб-панель]], [[заказы уходят в WhatsApp ссылкой wa.me и дублируются в бот]], [[дизайн LUNARA — редакционный бутик в терракоте с мотивом арки]].

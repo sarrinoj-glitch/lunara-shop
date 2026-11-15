@@ -107,7 +107,7 @@ export function CheckoutForm() {
     }
 
     try {
-      sessionStorage.setItem('ambra-last-order', JSON.stringify({ n: res.data.number, url: res.data.whatsappUrl }))
+      sessionStorage.setItem('lunara-last-order', JSON.stringify({ n: res.data.number, url: res.data.whatsappUrl }))
     } catch {
       /* приватный режим */
     }

@@ -34,7 +34,7 @@ export function ProductImage({
       ) : (
         <div className="absolute inset-0 grid place-items-center">
           <span className="accent-serif text-6xl text-brown/30" aria-hidden>
-            А
+            L
           </span>
         </div>
       )}

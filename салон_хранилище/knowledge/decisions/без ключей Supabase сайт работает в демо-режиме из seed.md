@@ -17,6 +17,6 @@ date: 2026-11-15
 
 **Чтобы включить полный режим:** задать три ключа Supabase, выполнить `db push` и `seed:catalog` (см. `docs/DEPLOY.md`). Код менять не нужно.
 
-**Репозиторий:** github.com/sarrinoj-glitch/ambra-shop (private).
+**Репозиторий:** github.com/sarrinoj-glitch/lunara-shop (private).
 
-Связано с [[архитектура магазина АМБРА]], [[заказы уходят в WhatsApp ссылкой wa.me и дублируются в бот]].
+Связано с [[архитектура магазина LUNARA]], [[заказы уходят в WhatsApp ссылкой wa.me и дублируются в бот]].

@@ -65,7 +65,7 @@ async function main() {
   const db = createAdminClient()
   const bot = getBot()
   bot.botInfo = {
-    id: 1, is_bot: true, first_name: 'Ambra', username: 'ambra_test_bot', can_join_groups: false,
+    id: 1, is_bot: true, first_name: 'Lunara', username: 'lunara_test_bot', can_join_groups: false,
     can_read_all_group_messages: false, supports_inline_queries: false, can_connect_to_business: false, has_main_web_app: false,
   } as typeof bot.botInfo
   bot.api.config.use(async (_prev, method, payload) => {

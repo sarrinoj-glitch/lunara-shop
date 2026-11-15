@@ -11,7 +11,7 @@ import { fmt, t } from '@/lib/i18n'
 import { waLink } from '@/lib/site-config'
 
 export function SuccessView({ number, auto }: { number: number | null; auto: boolean }) {
-  const raw = useSessionValue('ambra-last-order')
+  const raw = useSessionValue('lunara-last-order')
   const url = useMemo(() => {
     if (!raw) return null
     try {

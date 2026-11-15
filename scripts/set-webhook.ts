@@ -32,4 +32,4 @@ await call('setMyCommands', {
     { command: 'help', description: 'Как пользоваться' },
   ],
 })
-await call('setMyDescription', { description: 'Бот для управления магазином АМБРА: товары, цены, фото и заказы.' })
+await call('setMyDescription', { description: 'Бот для управления магазином LUNARA: товары, цены, фото и заказы.' })

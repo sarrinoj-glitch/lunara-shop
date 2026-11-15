@@ -38,7 +38,7 @@ export function EmptyState({ title, text, cta }: { title: string; text: string; 
   return (
     <div className="flex flex-col items-center gap-4 px-6 py-20 text-center">
       <div className="arch grid h-36 w-24 place-items-center bg-sand">
-        <span className="accent-serif text-5xl text-terracotta">А</span>
+        <span className="accent-serif text-5xl text-terracotta">L</span>
       </div>
       <p className="display text-2xl md:text-3xl">{title}</p>
       <p className="max-w-md text-muted-foreground">{text}</p>

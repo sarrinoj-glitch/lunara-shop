@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ===== Палитра «АМБРА»: терракота + коричневый ===== */
+/* ===== Палитра «LUNARA»: терракота + коричневый ===== */
 :root {
   --terracotta: #a84a24;      /* cream на нём 4.95:1 */
   --terracotta-deep: #8a3a1a;

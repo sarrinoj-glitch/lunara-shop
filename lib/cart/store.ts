@@ -65,7 +65,7 @@ export const useCart = create<CartState>()(
         })),
     }),
     {
-      name: 'ambra-cart',
+      name: 'lunara-cart',
       // На сервере (SSR) хранилища нет — persist просто ничего не делает
       storage: createJSONStorage(() => (typeof window === 'undefined' ? (undefined as unknown as Storage) : window.localStorage)),
       partialize: (s) => ({ items: s.items }),
