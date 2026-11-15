@@ -6,7 +6,8 @@ import { slugify } from '@/lib/slug'
 import { AppError, E } from '@/lib/errors'
 import { isDemo } from '@/lib/env'
 import { demoCategories, demoProducts } from './demo-source'
-import type { Aroma, CatalogFilter, CatalogProduct, Category } from './types'
+import type { Aroma, CatalogProduct, Category } from './types'
+export { filterProducts } from './filter'
 
 const SELECT = `
   id, slug, name, description, aroma, volume, price, old_price, discount_percent,
@@ -105,26 +106,6 @@ export async function getAromas(): Promise<Aroma[]> {
     map.set(p.aromaSlug, a)
   }
   return [...map.values()].sort((a, b) => b.count - a.count)
-}
-
-export function filterProducts(products: CatalogProduct[], f: CatalogFilter) {
-  let list = products
-  if (f.category) list = list.filter((p) => p.category.slug === f.category)
-  if (f.aroma) list = list.filter((p) => p.aromaSlug === f.aroma)
-  if (f.q) {
-    const q = f.q.toLowerCase().trim()
-    list = list.filter((p) => p.name.toLowerCase().includes(q) || (p.aroma ?? '').toLowerCase().includes(q))
-  }
-  switch (f.sort) {
-    case 'cheap':
-      return [...list].sort((a, b) => a.price - b.price)
-    case 'expensive':
-      return [...list].sort((a, b) => b.price - a.price)
-    case 'sale':
-      return [...list].filter((p) => p.discount).sort((a, b) => (b.discount ?? 0) - (a.discount ?? 0))
-    default:
-      return list
-  }
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | null> {

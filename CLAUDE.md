@@ -31,6 +31,10 @@ scripts/            seed-catalog.ts, set-webhook.ts
 data/seed/          products.json + images (стартовый каталог)
 ```
 
+## Режимы
+- Без ключей Supabase сайт работает в демо-режиме (`isDemo`, каталог из `data/seed`).
+- `NEXT_PUBLIC_STATIC_EXPORT=1` включает статическую сборку для GitHub Pages: `next.config.ts` подменяет `checkout/actions` и `catalog/queries` статическими версиями, файлы `*.server.ts` (вебхук, robots, sitemap) исключаются. Живой сайт: https://sarrinoj-glitch.github.io/lunara-shop/
+
 ## Правила
 - Next.js 16 отличается от прежних версий: перед кодом смотреть `node_modules/next/dist/docs/` (см. AGENTS.md).
 - Правила лежат в `../.claude/rules/` (общие) и `.claude/rules/` (этот проект). Если они расходятся, побеждают правила проекта.
@@ -52,6 +56,7 @@ pnpm db:types            # сгенерировать types/database.ts
 pnpm seed:catalog        # загрузить 62 товара + фото
 pnpm bot:set-webhook     # зарегистрировать вебхук Telegram (нужен публичный URL)
 pnpm test:bot            # smoke-тест бота без Telegram (19 проверок)
+pnpm build:pages         # статическая сборка для GitHub Pages (с NEXT_PUBLIC_STATIC_EXPORT=1)
 ```
 
 ## Obsidian Knowledge Vault

@@ -20,7 +20,7 @@ import { customerSchema, type CustomerInput } from '@/lib/schemas/order'
 import { cartTotal, useCart } from '@/lib/cart/store'
 import { formatPrice } from '@/lib/format'
 import { t } from '@/lib/i18n'
-import { createOrderAction, refreshCartAction } from '../actions'
+import { createOrderAction, refreshCartAction } from '@/app/(shop)/checkout/actions'
 import { E } from '@/lib/errors'
 
 /** +7 (999) 123-45-67 */

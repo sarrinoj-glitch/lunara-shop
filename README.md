@@ -8,7 +8,13 @@
 | Режим | Когда | Что работает |
 |---|---|---|
 | **Демо** | ключи Supabase не заданы | витрина из `data/seed` (62 товара), корзина, заказ → WhatsApp. Заказы не сохраняются, бот выключен |
+| **GitHub Pages** | сборка `pnpm build:pages` с `NEXT_PUBLIC_STATIC_EXPORT=1` (делает workflow) | то же, что демо, но полностью статично: фильтры и заказ работают в браузере |
 | **Полный** | заданы `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | каталог из БД, заказы в БД и в Telegram, админ-бот |
+
+## Сайт
+https://sarrinoj-glitch.github.io/lunara-shop/ — публикуется автоматически при каждом push в `main` (`.github/workflows/pages.yml`).
+
+Номер WhatsApp: Settings → Secrets and variables → Actions → **Variables** → `WHATSAPP_NUMBER` (только цифры, `79991234567`) и `WHATSAPP_DISPLAY`.
 
 ## Быстрый старт (демо)
 ```bash

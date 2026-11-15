@@ -1,4 +1,12 @@
-# Запуск в продакшн (≈ 20 минут)
+# Запуск в продакшн
+
+## Сейчас: GitHub Pages (статическая витрина, без сервера)
+- Workflow `.github/workflows/pages.yml` собирает `pnpm build:pages` и публикует `out/`.
+- Адрес: `https://<owner>.github.io/<repo>/` (basePath = имя репозитория).
+- Ограничения: заказы не сохраняются (только WhatsApp), Telegram-бота нет, каталог берётся из `data/seed`. Чтобы обновить товары, правится `data/seed/products.json` и фото в `public/catalog/`, потом push.
+- Номер WhatsApp задаётся в Actions Variables `WHATSAPP_NUMBER` / `WHATSAPP_DISPLAY`.
+
+## Потом: полный режим (Vercel + Supabase + бот, ≈ 20 минут)
 
 ## 0. Что понадобится
 - Аккаунты: [supabase.com](https://supabase.com) (Free), [vercel.com](https://vercel.com) (Hobby), GitHub.

@@ -12,7 +12,7 @@ process.env.OWNER_TELEGRAM_IDS = '111'
 const OWNER = 111
 const STRANGER = 999
 const sent: { method: string; payload: Record<string, unknown> }[] = []
-const samplePhoto = readFileSync(path.resolve(__dirname, '..', 'data/seed/images', 'krem-dlya-ruk-ambra-vanil-i-pachuli-1.webp'))
+const samplePhoto = readFileSync(path.resolve(__dirname, '..', 'public/catalog', 'krem-dlya-ruk-ambra-vanil-i-pachuli-1.webp'))
 
 // Подмена прямых fetch к Telegram (скачивание фото)
 const realFetch = globalThis.fetch

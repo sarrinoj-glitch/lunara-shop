@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,11 @@ import { useSessionValue } from '@/hooks/use-client-state'
 import { fmt, t } from '@/lib/i18n'
 import { waLink } from '@/lib/site-config'
 
-export function SuccessView({ number, auto }: { number: number | null; auto: boolean }) {
+export function SuccessView() {
+  const sp = useSearchParams()
+  const nRaw = sp.get('n')
+  const number = nRaw && /^\d{1,9}$/.test(nRaw) ? Number(nRaw) : null
+  const auto = sp.get('auto') === '1'
   const raw = useSessionValue('lunara-last-order')
   const url = useMemo(() => {
     if (!raw) return null

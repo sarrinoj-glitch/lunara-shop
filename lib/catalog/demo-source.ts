@@ -46,7 +46,8 @@ export const demoProducts: CatalogProduct[] = products.map((p, i) => {
     isHit: isHit(name),
     brand: SEED_BRAND,
     category: { slug: catSlug, name: CATEGORIES.find((c) => c.slug === catSlug)!.name },
-    images: p.images.map((f) => `/catalog/${f}`),
+    // basePath нужен для GitHub Pages (сайт живёт в /lunara-shop); next/image без оптимизатора его не добавляет
+    images: p.images.map((f) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/catalog/${f}`),
     createdAt: CREATED,
   }
 })

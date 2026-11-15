@@ -5,16 +5,11 @@ import { SuccessView } from './success-view'
 
 export const metadata: Metadata = { title: t.checkout.title, robots: { index: false } }
 
-async function Content({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const sp = await searchParams
-  const n = typeof sp.n === 'string' && /^\d{1,9}$/.test(sp.n) ? Number(sp.n) : null
-  return <SuccessView number={n} auto={sp.auto === '1'} />
-}
-
-export default function SuccessPage({ searchParams }: PageProps<'/checkout/success'>) {
+/** ?n и ?auto читаются в браузере — страница статична (работает и на GitHub Pages). */
+export default function SuccessPage() {
   return (
     <Suspense fallback={<div className="mx-auto mt-20 h-80 max-w-xl animate-pulse bg-sand" />}>
-      <Content searchParams={searchParams} />
+      <SuccessView />
     </Suspense>
   )
 }
