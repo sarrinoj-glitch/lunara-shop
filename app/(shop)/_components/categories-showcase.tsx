@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { RevealLines, Stagger, FadeItem } from '@/components/motion/reveal'
 import { ProductImage } from '@/components/shop/product-image'
+import { Tilt } from '@/components/motion/tilt'
 import { t } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
@@ -20,7 +21,8 @@ export function CategoriesShowcase({ categories }: { categories: ShowcaseCategor
       <Stagger className="grid gap-10 md:grid-cols-3 md:gap-6" stagger={0.12}>
         {items.map((c, i) => (
           <FadeItem key={c.slug} className={cn(i === 1 && 'md:mt-24', i === 2 && 'md:mt-10')}>
-            <Link href={`/catalog?category=${c.slug}`} className="group relative block">
+            <Link href={`/catalog?category=${c.slug}`} data-cursor={t.common.look} className="group relative block">
+              <Tilt max={7}>
               <div className={cn('relative overflow-hidden', i === 1 ? 'arch' : '')}>
                 <ProductImage
                   src={c.image}
@@ -30,7 +32,8 @@ export function CategoriesShowcase({ categories }: { categories: ShowcaseCategor
                   imgClassName="p-[14%] transition-transform duration-[1.2s] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.08]"
                 />
               </div>
-              <h3 className="display pointer-events-none absolute -bottom-5 left-3 text-[17vw] leading-none text-espresso transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-2 group-hover:translate-x-2 md:-bottom-6 md:text-[5.6vw]">
+              </Tilt>
+              <h3 className="display pointer-events-none absolute -bottom-5 left-3 text-[17vw] leading-none z-30 text-espresso transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:-translate-y-2 group-hover:translate-x-2 md:-bottom-6 md:text-[5.6vw]">
                 {c.name}
               </h3>
               <span className="absolute right-3 top-3 text-xs tabular-nums text-muted-foreground">

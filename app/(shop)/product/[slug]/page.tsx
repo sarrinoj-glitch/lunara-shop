@@ -65,7 +65,7 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
       </nav>
 
       <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:gap-14">
-        <ProductGallery images={p.images} name={p.name} badges={<ProductBadges p={p} className="absolute left-3 top-3 z-10" />} />
+        <ProductGallery images={p.images} name={p.name} slug={p.slug} badges={<ProductBadges p={p} className="absolute left-3 top-3 z-10" />} />
 
         <div className="md:sticky md:top-24 md:self-start">
           <p className="text-xs uppercase tracking-[0.3em] text-terracotta">{p.brand}</p>

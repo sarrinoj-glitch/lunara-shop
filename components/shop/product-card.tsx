@@ -2,16 +2,18 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRef } from 'react'
-import { Plus } from 'lucide-react'
+import { useRef, ViewTransition } from 'react'
+import { Eye, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/format'
 import { t } from '@/lib/i18n'
 import { useCart } from '@/lib/cart/store'
+import { useUI } from '@/lib/ui/store'
 import type { CatalogProduct } from '@/lib/catalog/types'
 import { ProductImage } from './product-image'
 import { flyToCart } from './fly-to-cart'
+import { AddToCartButton } from './add-to-cart-button'
 
 export function ProductBadges({ p, className }: { p: CatalogProduct; className?: string }) {
   return (
@@ -31,30 +33,42 @@ export function ProductBadges({ p, className }: { p: CatalogProduct; className?:
   )
 }
 
-export function ProductCard({ p, priority, sizes }: { p: CatalogProduct; priority?: boolean; sizes?: string }) {
+/** Имя view-transition для «перелёта» фото из карточки на страницу товара. */
+export const productVT = (slug: string) => `product-${slug}`
+
+export function useAddToCart(p: CatalogProduct) {
   const add = useCart((s) => s.add)
+  return (source: HTMLElement | null, qty = 1) => {
+    add({ productId: p.id, slug: p.slug, name: p.name, price: p.price, image: p.images[0] ?? null }, qty)
+    flyToCart(source, p.images[0] ?? null)
+    toast(t.common.added, { description: qty > 1 ? `${p.name} × ${qty}` : p.name })
+  }
+}
+
+export function ProductCard({ p, priority, sizes, transition = true }: { p: CatalogProduct; priority?: boolean; sizes?: string; transition?: boolean }) {
   const imgRef = useRef<HTMLDivElement>(null)
+  const addToCart = useAddToCart(p)
+  const openQuickView = useUI((s) => s.openQuickView)
   const second = p.images[1]
   const href = `/product/${p.slug}`
+  const onAdd = () => addToCart(imgRef.current)
 
-  const onAdd = () => {
-    add({ productId: p.id, slug: p.slug, name: p.name, price: p.price, image: p.images[0] ?? null })
-    flyToCart(imgRef.current, p.images[0] ?? null)
-    toast(t.common.added, { description: p.name })
-  }
+  const image = (
+    <ProductImage
+      src={p.images[0]}
+      alt={p.name}
+      sizes={sizes ?? '(min-width: 1024px) 25vw, 50vw'}
+      priority={priority}
+      className="h-full w-full"
+      imgClassName="p-[8%] transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.06]"
+    />
+  )
 
   return (
     <article className="group relative flex flex-col">
       <div ref={imgRef} className="relative aspect-square">
-        <Link href={href} aria-label={p.name} className="absolute inset-0 block">
-          <ProductImage
-            src={p.images[0]}
-            alt={p.name}
-            sizes={sizes ?? '(min-width: 1024px) 25vw, 50vw'}
-            priority={priority}
-            className="h-full w-full"
-            imgClassName="p-[8%] transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.06]"
-          />
+        <Link href={href} aria-label={p.name} data-cursor={t.common.look} className="absolute inset-0 block">
+          {transition ? <ViewTransition name={productVT(p.slug)}>{image}</ViewTransition> : image}
           {second ? (
             <Image
               src={second}
@@ -66,26 +80,34 @@ export function ProductCard({ p, priority, sizes }: { p: CatalogProduct; priorit
           ) : null}
         </Link>
         <ProductBadges p={p} className="absolute left-2 top-2 z-10" />
+
+        {/* быстрый просмотр */}
+        <button
+          type="button"
+          onClick={() => openQuickView(p)}
+          aria-label={`${t.common.quickView}: ${p.name}`}
+          className="absolute right-2 top-2 z-10 flex items-center gap-1.5 rounded-full bg-ivory/90 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-espresso shadow-sm backdrop-blur transition-all duration-500 hover:bg-espresso hover:text-ivory [@media(hover:hover)]:translate-y-[-6px] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100"
+        >
+          <Eye className="size-3.5" aria-hidden />
+          <span className="hidden sm:inline">{t.common.quickView}</span>
+        </button>
+
         {!p.inStock ? (
           <span className="absolute inset-x-0 bottom-0 z-10 bg-espresso/80 py-1.5 text-center text-xs uppercase tracking-wider text-ivory">
             {t.common.outOfStock}
           </span>
         ) : (
           <>
-            {/* desktop: кнопка выезжает снизу */}
-            <button
-              type="button"
-              onClick={onAdd}
-              className="absolute inset-x-0 bottom-0 z-10 hidden translate-y-full bg-espresso py-3 text-xs font-medium uppercase tracking-[0.18em] text-ivory opacity-0 transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-terracotta focus-visible:translate-y-0 focus-visible:opacity-100 [@media(hover:hover)]:block [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100"
-            >
-              {t.common.toCart}
-            </button>
+            {/* desktop: кнопка выезжает снизу и морфится в «Добавлено» */}
+            <div className="absolute inset-x-0 bottom-0 z-10 hidden translate-y-full opacity-0 transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] focus-within:translate-y-0 focus-within:opacity-100 [@media(hover:hover)]:block [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100">
+              <AddToCartButton onAdd={onAdd} className="h-11 w-full rounded-none" />
+            </div>
             {/* mobile: круглая «+» */}
             <button
               type="button"
               onClick={onAdd}
               aria-label={`${t.common.toCart}: ${p.name}`}
-              className="absolute bottom-2 right-2 z-10 grid size-10 place-items-center rounded-full bg-espresso text-ivory shadow-md active:scale-90 transition-transform [@media(hover:hover)]:hidden"
+              className="absolute bottom-2 right-2 z-10 grid size-10 place-items-center rounded-full bg-espresso text-ivory shadow-md transition-transform active:scale-90 [@media(hover:hover)]:hidden"
             >
               <Plus className="size-5" aria-hidden />
             </button>

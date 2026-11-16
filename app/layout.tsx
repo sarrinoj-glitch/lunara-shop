@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Jost } from 'next/font/google'
 import { MotionProvider } from '@/components/motion/motion-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { Intro, introScript } from '@/components/motion/intro'
+import { CustomCursor } from '@/components/motion/custom-cursor'
 import { siteConfig } from '@/lib/site-config'
 import { publicEnv } from '@/lib/public-env'
 import './globals.css'
@@ -20,6 +22,8 @@ export const metadata: Metadata = {
   title: { default: `${siteConfig.name} — ${siteConfig.tagline}`, template: `%s — ${siteConfig.name}` },
   description: siteConfig.description,
   openGraph: { type: 'website', locale: 'ru_RU', siteName: siteConfig.name },
+  // Вторая версия витрины (v2) не индексируется, чтобы не дублировать основную
+  robots: process.env.NEXT_PUBLIC_NOINDEX === '1' ? { index: false, follow: false } : undefined,
 }
 
 export const viewport: Viewport = {
@@ -30,9 +34,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="ru" className={`${jost.variable} ${cormorant.variable}`}>
+    <html lang="ru" className={`${jost.variable} ${cormorant.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: introScript }} />
+      </head>
       <body className="min-h-dvh">
-        <MotionProvider>{children}</MotionProvider>
+        <MotionProvider>
+          <Intro />
+          {children}
+          <CustomCursor />
+        </MotionProvider>
         <Toaster position="bottom-center" />
       </body>
     </html>

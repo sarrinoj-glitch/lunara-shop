@@ -9,6 +9,9 @@ import { RitualsList } from './_components/rituals-list'
 import { HowToOrder } from './_components/how-to-order'
 import { Manifesto } from './_components/manifesto'
 import { EmptyState } from '@/components/shop/states'
+import { BrandStats } from './_components/brand-stats'
+import { HammamRitual } from './_components/hammam-ritual'
+import { AromaJourney } from './_components/aroma-journey'
 
 export default async function HomePage() {
   const [products, categories, aromas] = await Promise.all([getAllProducts(), getCategories(), getAromas()])
@@ -48,15 +51,35 @@ export default async function HomePage() {
     pickImage((p) => /гоммаж/i.test(p.name)),
   ]
 
+  const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
+  const hammam = t.home.hammamSteps
+    .map((s) => ({ step: s.step, text: s.text, product: products.find((p) => norm(p.name).startsWith(s.match) && p.images[0]) }))
+    .filter((s): s is { step: string; text: string; product: (typeof products)[number] } => Boolean(s.product))
+
+  const notes = t.home.aromaNotes as Record<string, string>
+  const journey = aromas
+    .filter((a) => notes[a.name])
+    .map((a) => {
+      const line = products.filter((p) => p.aromaSlug === a.slug && p.images[0])
+      const hero = line.find((p) => /парфюм|лосьон|масло/i.test(p.name)) ?? line[0]
+      return { slug: a.slug, name: a.name, count: a.count, image: hero?.images[0] ?? a.image, note: notes[a.name] }
+    })
+
+  const maxDiscount = Math.max(0, ...products.map((p) => p.discount ?? 0))
+  const stats = { products: products.length, aromas: aromas.length, categories: categories.length, discount: maxDiscount }
+
   return (
     <>
       <Hero slides={slides} />
       <div className="grain border-y border-terracotta-deep bg-terracotta py-4 text-ivory md:py-5">
         <VelocityMarquee items={t.home.marquee} className="relative z-[2] text-lg font-light uppercase tracking-[0.14em] md:text-2xl" />
       </div>
+      <BrandStats values={stats} />
       <CategoriesShowcase categories={showcase} />
       <ProductTabs groups={groups} />
-      <RitualsList aromas={aromas.slice(0, 8)} />
+      <HammamRitual steps={hammam} />
+      <AromaJourney items={journey} />
+      <RitualsList aromas={aromas} />
       <HowToOrder />
       <Manifesto images={manifestoImages} />
     </>

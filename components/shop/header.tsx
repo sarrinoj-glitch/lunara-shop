@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useHydrated } from '@/hooks/use-client-state'
+import { useUI } from '@/lib/ui/store'
+import { ScrollProgress } from '@/components/motion/scroll-progress'
 import { motion, useMotionValueEvent, useScroll } from 'motion/react'
 import { Menu, Search, ShoppingBag } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -56,6 +58,7 @@ export function Header() {
   const { scrollY } = useScroll()
   const [compact, setCompact] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const setSearchOpen = useUI((st) => st.setSearchOpen)
   useMotionValueEvent(scrollY, 'change', (v) => setCompact(v > 40))
 
   return (
@@ -65,6 +68,7 @@ export function Header() {
         compact ? 'h-14 border-b border-line bg-cream/85 backdrop-blur-md' : 'h-[72px] border-b border-transparent',
       )}
     >
+      <ScrollProgress />
       <div className="mx-auto grid h-full max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center px-4 md:px-8">
         <div className="flex items-center gap-1 md:gap-6">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -116,9 +120,15 @@ export function Header() {
         </Link>
 
         <div className="flex items-center justify-end gap-1 md:gap-3">
-          <Link href="/catalog#search" className="grid size-10 place-items-center hover:text-terracotta" aria-label={t.common.search}>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="grid size-10 place-items-center hover:text-terracotta"
+            aria-label={t.search.open}
+            title={t.search.hint}
+          >
             <Search className="size-5" strokeWidth={1.4} aria-hidden />
-          </Link>
+          </button>
           <a href={waLink()} target="_blank" rel="noopener" className="hidden size-10 place-items-center hover:text-terracotta sm:grid" aria-label={t.common.whatsapp}>
             <WhatsappIcon className="size-5" />
           </a>

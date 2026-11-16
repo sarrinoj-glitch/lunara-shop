@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { RevealLines, FadeIn } from '@/components/motion/reveal'
 import { DrawLine } from '@/components/motion/draw-line'
+import { ScrollWordReveal } from '@/components/motion/scroll-word-reveal'
 import { Parallax } from '@/components/motion/parallax'
 import { Magnetic } from '@/components/motion/magnetic'
 import { ProductImage } from '@/components/shop/product-image'
@@ -23,7 +24,7 @@ export function Manifesto({ images }: { images: (string | null)[] }) {
             ]}
           />
           <FadeIn delay={0.2} className="mt-10 flex flex-col gap-8 md:flex-row md:items-center md:pl-[10%]">
-            <p className="max-w-md leading-relaxed text-muted-foreground">{t.home.manifestoText}</p>
+            <ScrollWordReveal text={t.home.manifestoText} className="max-w-md text-lg leading-relaxed text-espresso md:text-xl" />
             <Magnetic>
               <Link
                 href="/catalog?category=telo"
