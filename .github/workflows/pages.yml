@@ -1,10 +1,13 @@
 # Публикация витрины LUNARA на GitHub Pages (статический демо-режим, без Supabase).
-# Запускается на каждый push в main и вручную из вкладки Actions.
+# Собирает ДВЕ версии в один сайт:
+#   ветка main → https://<owner>.github.io/<repo>/
+#   ветка v2   → https://<owner>.github.io/<repo>/v2/   (вторая версия для сравнения, noindex)
+# Запускается на push в main или v2 и вручную из вкладки Actions.
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   workflow_dispatch:
 
 permissions:
@@ -16,30 +19,71 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  NEXT_PUBLIC_STATIC_EXPORT: '1'
+  # Номер WhatsApp владелицы: Settings → Secrets and variables → Actions → Variables
+  NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER || '79990000000' }}
+  NEXT_PUBLIC_WHATSAPP_DISPLAY: ${{ vars.WHATSAPP_DISPLAY || '+7 (999) 000-00-00' }}
+  NEXT_TELEMETRY_DISABLED: '1'
+  SITE: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+  BASE: /${{ github.event.repository.name }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_STATIC_EXPORT: '1'
-      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-      NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-      # Номер WhatsApp владелицы задаётся в Settings → Secrets and variables → Actions → Variables
-      NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ vars.WHATSAPP_NUMBER || '79990000000' }}
-      NEXT_PUBLIC_WHATSAPP_DISPLAY: ${{ vars.WHATSAPP_DISPLAY || '+7 (999) 000-00-00' }}
-      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: v1
+      - id: v2
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: v2
+          path: v2src
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: v1/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:pages
+          cache-dependency-path: |
+            v1/pnpm-lock.yaml
+            v2src/pnpm-lock.yaml
+
+      - name: Build v1 (main)
+        working-directory: v1
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.BASE }}
+          NEXT_PUBLIC_SITE_URL: ${{ env.SITE }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:pages
+
+      - name: Build v2
+        if: steps.v2.outcome == 'success'
+        working-directory: v2src
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ env.BASE }}/v2
+          NEXT_PUBLIC_SITE_URL: ${{ env.SITE }}/v2
+          NEXT_PUBLIC_NOINDEX: '1'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:pages
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -R v1/out/. site/
+          if [ -d v2src/out ]; then mkdir -p site/v2 && cp -R v2src/out/. site/v2/; fi
+          touch site/.nojekyll
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: site
 
   deploy:
     needs: build
