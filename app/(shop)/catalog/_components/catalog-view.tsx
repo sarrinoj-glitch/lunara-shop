@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ProductCard } from '@/components/shop/product-card'
 import { EmptyState } from '@/components/shop/states'
-import { Stagger, FadeItem } from '@/components/motion/reveal'
+import { AnimatePresence, motion } from 'motion/react'
 import { filterProducts, SORTS } from '@/lib/catalog/filter'
 import type { CatalogProduct, CatalogSort, Category } from '@/lib/catalog/types'
 import { plural } from '@/lib/format'
@@ -42,13 +42,22 @@ export function CatalogView({ products, categories, aromas }: { products: Catalo
       {list.length === 0 ? (
         <EmptyState title={t.catalog.emptyTitle} text={t.catalog.emptyText} cta={{ label: t.catalog.reset, href: '/catalog' }} />
       ) : (
-        <Stagger onMount key={`${category}-${aroma}-${sort}-${q}`} className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4" stagger={0.04}>
-          {list.map((p, i) => (
-            <FadeItem key={p.id}>
-              <ProductCard p={p} priority={i < 4} />
-            </FadeItem>
-          ))}
-        </Stagger>
+        <motion.div layout className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {list.map((p, i) => (
+              <motion.div
+                key={p.id}
+                layout
+                initial={{ opacity: 0, scale: 0.94, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.25 } }}
+                transition={{ type: 'spring', stiffness: 260, damping: 30, delay: Math.min(i, 12) * 0.025 }}
+              >
+                <ProductCard p={p} priority={i < 4} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </>
   )

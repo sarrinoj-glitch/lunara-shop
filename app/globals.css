@@ -154,3 +154,38 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-spin-slow, .animate-marquee { animation: none; }
 }
+
+/* ===== v2: интро ===== */
+html[data-intro='done'] [data-intro-overlay] {
+  display: none;
+}
+/* Без JS оверлей сам исчезнет */
+[data-intro-overlay] {
+  animation: intro-fallback 0.4s 3s forwards;
+}
+@keyframes intro-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ===== v2: переходы между страницами (React ViewTransition) ===== */
+::view-transition-group(*) {
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  [data-intro-overlay] {
+    display: none;
+  }
+}

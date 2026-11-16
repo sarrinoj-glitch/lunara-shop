@@ -1,12 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Minus, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { RollingText } from '@/components/motion/rolling-number'
+import { useMediaQuery } from '@/hooks/use-client-state'
 import { cartTotal, useCart } from '@/lib/cart/store'
 import { formatPrice } from '@/lib/format'
 import { t } from '@/lib/i18n'
@@ -30,6 +33,35 @@ export function QtyControl({ value, onChange, size = 'sm' }: { value: number; on
   )
 }
 
+/** Desktop — боковая панель справа; телефон — свайп-панель снизу (vaul Drawer). */
+function CartFrame({ open, onOpenChange, children }: { open: boolean; onOpenChange: (o: boolean) => void; children: ReactNode }) {
+  const desktop = useMediaQuery('(min-width: 768px)')
+  if (desktop) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="flex w-full flex-col border-none bg-cream p-0 sm:max-w-md">
+          <SheetHeader className="border-b border-line px-6 py-5">
+            <SheetTitle className="display text-2xl">{t.cart.title}</SheetTitle>
+            <SheetDescription className="sr-only">{t.cart.title}</SheetDescription>
+          </SheetHeader>
+          {children}
+        </SheetContent>
+      </Sheet>
+    )
+  }
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="flex max-h-[88dvh] flex-col border-none bg-cream">
+        <DrawerHeader className="border-b border-line px-6 pb-4 pt-2 text-left">
+          <DrawerTitle className="display text-2xl">{t.cart.title}</DrawerTitle>
+          <DrawerDescription className="sr-only">{t.cart.title}</DrawerDescription>
+        </DrawerHeader>
+        <div className="flex min-h-[40dvh] flex-1 flex-col overflow-hidden">{children}</div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
 export function CartSheet() {
   const { items, open, setOpen, setQty, remove, restore, sync } = useCart()
 
@@ -45,12 +77,7 @@ export function CartSheet() {
   const total = cartTotal(items)
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side="right" className="flex w-full flex-col border-none bg-cream p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-line px-6 py-5">
-          <SheetTitle className="display text-2xl">{t.cart.title}</SheetTitle>
-          <SheetDescription className="sr-only">{t.cart.title}</SheetDescription>
-        </SheetHeader>
+    <CartFrame open={open} onOpenChange={setOpen}>
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
@@ -115,9 +142,7 @@ export function CartSheet() {
             <div className="border-t border-line bg-ivory px-6 py-5">
               <div className="mb-4 flex items-baseline justify-between">
                 <span className="text-xs uppercase tracking-[0.2em]">{t.cart.total}</span>
-                <motion.span key={total} initial={{ opacity: 0.4, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-light">
-                  {formatPrice(total)}
-                </motion.span>
+                <RollingText value={formatPrice(total)} className="text-2xl font-light" />
               </div>
               <Button asChild size="lg" className="h-14 w-full rounded-full text-xs uppercase tracking-[0.2em]" onClick={() => setOpen(false)}>
                 <Link href="/checkout">{t.cart.checkout}</Link>
@@ -125,7 +150,6 @@ export function CartSheet() {
             </div>
           </>
         )}
-      </SheetContent>
-    </Sheet>
+    </CartFrame>
   )
 }

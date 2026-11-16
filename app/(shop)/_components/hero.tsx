@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useScroll, useTransform } from 'motion/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { RevealLines } from '@/components/motion/reveal'
 import { Magnetic } from '@/components/motion/magnetic'
+import { Tilt } from '@/components/motion/tilt'
 import { ProductImage } from '@/components/shop/product-image'
 import { t } from '@/lib/i18n'
 
@@ -84,6 +85,17 @@ export function Hero({ slides }: { slides: HeroSlide[] }) {
       </div>
 
       <div className="relative">
+        {/* v2: тёплые пятна света, медленно плывут за аркой */}
+        <div aria-hidden className="pointer-events-none absolute -inset-[15%] -z-0 overflow-hidden">
+          {[
+            { c: 'bg-clay/50', s: 'size-[60%]', p: 'left-[5%] top-[10%]', a: { x: [0, 40, -20, 0], y: [0, -30, 20, 0] }, d: 18 },
+            { c: 'bg-terracotta/25', s: 'size-[50%]', p: 'right-[0%] top-[35%]', a: { x: [0, -50, 10, 0], y: [0, 30, -20, 0] }, d: 22 },
+            { c: 'bg-sand', s: 'size-[55%]', p: 'left-[20%] bottom-[0%]', a: { x: [0, 30, -40, 0], y: [0, 20, -10, 0] }, d: 26 },
+          ].map((b, k) => (
+            <motion.div key={k} className={`absolute rounded-full blur-3xl ${b.c} ${b.s} ${b.p}`} animate={b.a} transition={{ duration: b.d, repeat: Infinity, ease: 'easeInOut' }} />
+          ))}
+        </div>
+        <Tilt max={6} glare={false} className="relative z-[1]">
         <motion.div
           initial={{ clipPath: 'inset(100% 0 0 0)' }}
           animate={{ clipPath: 'inset(0% 0 0 0)' }}
@@ -106,6 +118,7 @@ export function Hero({ slides }: { slides: HeroSlide[] }) {
             ) : null}
           </AnimatePresence>
         </motion.div>
+        </Tilt>
         {/* декоративная тонкая арка-контур */}
         <motion.div style={{ rotate }} className="arch pointer-events-none absolute left-1/2 top-[-4%] aspect-[4/5] w-[92%] -translate-x-1/2 border border-terracotta/40" aria-hidden />
         {slides.length > 1 ? (
