@@ -33,7 +33,7 @@ data/seed/          products.json + images (стартовый каталог)
 
 ## Режимы
 - Без ключей Supabase сайт работает в демо-режиме (`isDemo`, каталог из `data/seed`).
-- `NEXT_PUBLIC_STATIC_EXPORT=1` включает статическую сборку для GitHub Pages: `next.config.ts` подменяет `checkout/actions` и `catalog/queries` статическими версиями, файлы `*.server.ts` (вебхук, robots, sitemap) исключаются. Живой сайт: https://sarrinoj-glitch.github.io/lunara-shop/
+- `NEXT_PUBLIC_STATIC_EXPORT=1` включает статическую сборку для GitHub Pages: `next.config.ts` подменяет `checkout/actions` и `catalog/queries` статическими версиями, файлы `*.server.ts` (вебхук, robots, sitemap) исключаются. Живой сайт: https://sarrinoj-glitch.github.io/lunara-shop/ (с 2026-11-16 это бывшая v2 с анимациями; первая версия сохранена тегом `v1`)
 
 ## Правила
 - Next.js 16 отличается от прежних версий: перед кодом смотреть `node_modules/next/dist/docs/` (см. AGENTS.md).
