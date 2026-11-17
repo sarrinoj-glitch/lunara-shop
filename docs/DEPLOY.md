@@ -24,7 +24,7 @@
 
 ## 2. Telegram-бот
 1. В [@BotFather](https://t.me/BotFather) выполнить `/newbot` → получить `TELEGRAM_BOT_TOKEN`. Аватарку и описание можно задать там же.
-2. Владелица пишет [@userinfobot](https://t.me/userinfobot) → её числовой ID пойдёт в `OWNER_TELEGRAM_IDS`.
+2. Владелица пишет боту `/start` — бот ответит «Ваш Telegram ID: …». Этот номер идёт в `OWNER_TELEGRAM_IDS` (несколько — через запятую). Можно и через [@userinfobot](https://t.me/userinfobot).
 3. Секрет вебхука: `openssl rand -hex 24` → `TELEGRAM_WEBHOOK_SECRET`.
 
 ## 3. Vercel
@@ -53,3 +53,11 @@ pnpm seed:catalog           # 62 товара
 pnpm dev                    # http://localhost:3000
 pnpm test:bot               # smoke-тест бота без Telegram
 ```
+
+### Бот с телефона без сервера
+1. В @BotFather создать **отдельного тестового** бота (`/newbot`), токен вписать в `.env.local` → `TELEGRAM_BOT_TOKEN`.
+2. `pnpm bot:dev` — бот работает, пока открыт терминал (long polling, вебхук не нужен).
+3. Написать боту `/start` → он покажет ваш Telegram ID → вписать в `OWNER_TELEGRAM_IDS`, перезапустить `pnpm bot:dev`.
+4. Фото товаров в карточках бота не видны: Telegram не достаёт до локального Supabase. Бот показывает карточку текстом, на боевом сервере фото будут.
+
+Если запустить `bot:dev` с токеном боевого бота, скрипт снимет его вебхук. Потом его нужно вернуть: `pnpm bot:set-webhook`.

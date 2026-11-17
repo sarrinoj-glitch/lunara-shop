@@ -35,6 +35,8 @@ export type Draft = {
   returnTo?: 'preview'
   /** варианты ароматов, показанные кнопками (индекс в callback) */
   aromaOptions?: string[]
+  /** правка фото товара: заменить все или добавить к текущим */
+  photoMode?: 'replace' | 'append'
 }
 
 export type Session = { state: BotState; data: Draft }
@@ -48,11 +50,44 @@ export async function getSession(chatId: number): Promise<Session> {
     await db.from('bot_sessions').insert({ chat_id: chatId, state: 'idle', data: {} })
     return { state: 'idle', data: {} }
   }
+  const session = { state: data.state as BotState, data: (data.data ?? {}) as Draft }
   const touched = new Date(data.updated_at ?? data.created_at).getTime()
-  if (Date.now() - touched > TTL_MS && data.state !== 'idle') {
-    return { state: 'idle', data: (data.data ?? {}) as Draft }
+  if (Date.now() - touched > TTL_MS && session.state !== 'idle') {
+    // Перерыв больше суток: незаконченный товар откладываем, чтобы предложить продолжить
+    await leaveFlow(chatId, session)
+    return { state: 'idle', data: {} }
   }
-  return { state: data.state as BotState, data: (data.data ?? {}) as Draft }
+  return session
+}
+
+/* ---------- незаконченный товар ---------- */
+
+export type Pending = { state: BotState; data: Draft }
+
+const isAdding = (s: Session) => s.state.startsWith('add.') && Boolean(s.data.photos?.length || s.data.name)
+
+/**
+ * Выход из текущего сценария (/start, другой раздел меню, перерыв).
+ * Если владелица была посреди добавления товара — откладываем черновик в `pending`.
+ */
+export async function leaveFlow(chatId: number, current?: Session) {
+  const s = current ?? (await getSession(chatId))
+  const db = createAdminClient()
+  if (isAdding(s)) {
+    const pending: Pending = { state: s.state, data: { ...s.data, returnTo: undefined, aromaOptions: undefined } }
+    await db.from('bot_sessions').update({ state: 'idle', data: {}, pending: pending as unknown as Json }).eq('chat_id', chatId)
+  } else {
+    await setSession(chatId, 'idle', {})
+  }
+}
+
+export async function getPending(chatId: number): Promise<Pending | null> {
+  const { data } = await createAdminClient().from('bot_sessions').select('pending').eq('chat_id', chatId).maybeSingle()
+  return (data?.pending as Pending | null) ?? null
+}
+
+export async function clearPending(chatId: number) {
+  await createAdminClient().from('bot_sessions').update({ pending: null }).eq('chat_id', chatId)
 }
 
 export async function setSession(chatId: number, state: BotState, data: Draft) {

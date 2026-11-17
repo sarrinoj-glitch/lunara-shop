@@ -11,6 +11,7 @@
     "db:types": "supabase gen types typescript > types/database.ts",
     "seed:catalog": "tsx --env-file=.env.local scripts/seed-catalog.ts",
     "bot:set-webhook": "tsx --env-file=.env.local scripts/set-webhook.ts",
+    "bot:dev": "tsx --conditions=react-server --env-file=.env.local scripts/bot-dev.ts",
     "test:bot": "tsx --conditions=react-server --env-file=.env.local scripts/bot-smoke.ts",
     "build:pages": "next build && tsx scripts/static-meta.ts"
   },

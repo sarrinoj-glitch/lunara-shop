@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "bot_sessions": {
                   Row: {
-                    "chat_id": number,"created_at": string,"data": NonNullable<Json>,"state": string,"updated_at": string | null
+                    "chat_id": number,"created_at": string,"data": NonNullable<Json>,"pending": Json | null,"state": string,"updated_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "chat_id": number,"created_at"?: string,"data"?: NonNullable<Json>,"state"?: string,"updated_at"?: string | null
+                    "chat_id": number,"created_at"?: string,"data"?: NonNullable<Json>,"pending"?: Json | null,"state"?: string,"updated_at"?: string | null
                   }
                   Update: {
-                    "chat_id"?: number,"created_at"?: string,"data"?: NonNullable<Json>,"state"?: string,"updated_at"?: string | null
+                    "chat_id"?: number,"created_at"?: string,"data"?: NonNullable<Json>,"pending"?: Json | null,"state"?: string,"updated_at"?: string | null
                   }
                   Relationships: [
                     

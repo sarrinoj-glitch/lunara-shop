@@ -85,10 +85,26 @@ async function main() {
   // 1. Чужой пользователь
   await run(text('/start', STRANGER))
   assert(lastText().includes('только для владельца'), 'чужой пользователь не получает доступ')
+  assert(lastText().includes(String(STRANGER)), 'чужому показывается его Telegram ID (для настройки)')
 
   // 2. Старт
   await run(text('/start'))
   assert(lastText().includes('помогаю вести магазин'), '/start показывает приветствие и меню')
+
+  // 2a. Незаконченный товар переживает /start
+  await run(text('➕ Добавить товар'))
+  await run(photo('P1'))
+  await run(text('/start'))
+  await run(text('➕ Добавить товар'))
+  assert(lastText().includes('незаконченный товар') && lastText().includes('фото: 1'), 'после /start бот предлагает продолжить незаконченный товар')
+  await run(cb('a:resume'))
+  assert(lastText().includes('Фото получено (1)'), '«Продолжить» возвращает к шагу с уже присланным фото')
+  await run(cb('a:cat:ruki'))
+  assert(lastText().includes('уже не работает'), 'старая кнопка другого шага не срабатывает')
+  await run(cb('a:cancel'))
+  await run(text('➕ Добавить товар'))
+  assert(lastText().includes('Пришлите фото'), 'после «Отмена» незаконченного товара нет')
+  await run(cb('a:cancel'))
 
   // 3. Добавление товара
   await run(text('➕ Добавить товар'))
@@ -113,7 +129,7 @@ async function main() {
   await run(cb('a:skip:description'))
   assert(lastText().includes('Тестовый крем для рук') && lastText().includes('фото: 2'), 'превью с названием и 2 фото (альбом не потерялся)')
   await run(cb('a:pub'))
-  assert(lastText().includes('Товар уже на сайте'), 'товар опубликован')
+  assert(/Товар уже на сайте|Товар сохранён/.test(lastText()), 'товар опубликован')
 
   const { data: p } = await db
     .from('products')
@@ -134,6 +150,24 @@ async function main() {
   await run(text('2100'))
   const { data: p2 } = await db.from('products').select('price, in_stock, status').eq('id', p!.id).single()
   assert(p2 && !p2.in_stock && p2.status === 'hidden' && Number(p2.price) === 2100, 'наличие, скрытие и цена меняются кнопками')
+
+  // 4a. Фото: добавить к текущим и удалить одно
+  const imgCount = async () =>
+    (await db.from('product_images').select('id', { count: 'exact', head: true }).eq('product_id', p!.id)).count
+  await run(cb(`p:photo:${p!.id}`))
+  assert(lastText().includes('Фото у товара: 2'), 'кнопка «Фото» показывает меню')
+  await run(cb(`p:phadd:${p!.id}`))
+  assert(lastText().includes('можно ещё 4'), '«Добавить ещё» считает свободные места')
+  await run(photo('F3'))
+  await run(cb('e:pdone'))
+  assert((await imgCount()) === 3, 'фото добавлено к текущим (стало 3)')
+  await run(cb(`p:phdel:${p!.id}`))
+  assert(lastText().includes('Какое фото удалить'), '«Удалить одно» спрашивает номер')
+  const { data: firstImg } = await db.from('product_images').select('id').eq('product_id', p!.id).order('sort').limit(1).single()
+  await run(cb(`i:rm:${firstImg!.id}`))
+  assert((await imgCount()) === 2, 'фото удалено (стало 2)')
+  await run(cb('e:pdone'))
+  assert(lastText().includes('уже не работает'), '«Готово» вне загрузки фото не срабатывает')
 
   // 5. Удаление
   await run(cb(`p:del:${p!.id}`))

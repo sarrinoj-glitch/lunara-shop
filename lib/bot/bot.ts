@@ -3,6 +3,7 @@ import { Bot, InlineKeyboard, type Context } from 'grammy'
 import { env } from '@/lib/env'
 import { logger } from '@/lib/logger'
 import { formatPrice } from '@/lib/format'
+import { publicEnv, storageUrl } from '@/lib/public-env'
 import { B } from './texts'
 import {
   draftCaption,
@@ -17,7 +18,7 @@ import {
   productPhotoUrl,
   productUrl,
 } from './render'
-import { appendPhoto, getSession, setSession, type BotState, type Draft } from './session'
+import { appendPhoto, clearPending, getPending, getSession, leaveFlow, setSession, type BotState, type Draft } from './session'
 import * as repo from './repo'
 import { downloadTelegramFile, MAX_PHOTOS, uploadProductImage } from './images'
 
@@ -154,7 +155,80 @@ async function saveDraft(ctx: Context, d: Draft, status: 'published' | 'draft') 
   await repo.addImages(created.id, uploaded)
   repo.refreshSite()
   await setSession(id, 'idle', {})
-  return ctx.reply(status === 'published' ? B.add.published(productUrl(created.slug)) : B.add.drafted, { reply_markup: mainMenu })
+  const publishedText = publicEnv.siteUrl.startsWith('https://') ? B.add.published(productUrl(created.slug)) : B.add.publishedLocal
+  return ctx.reply(status === 'published' ? publishedText : B.add.drafted, { reply_markup: mainMenu })
+}
+
+/** Какой шаг должен быть активен, чтобы кнопка мастера сработала (старые кнопки в чате игнорируем). */
+const addActionState: Record<string, (arg: string) => BotState> = {
+  done: () => 'add.photos',
+  nodisc: () => 'add.old_price',
+  cat: () => 'add.category',
+  ar: () => 'add.aroma',
+  skip: (arg) => `add.${arg}` as BotState,
+  pub: () => 'add.preview',
+  draft: () => 'add.preview',
+  fix: () => 'add.preview',
+}
+
+/** «➕ Добавить товар»: если есть незаконченный — предлагаем продолжить. */
+async function startAdd(ctx: Context) {
+  const id = await chatId(ctx)
+  await leaveFlow(id)
+  const pending = await getPending(id)
+  if (pending) {
+    return ctx.reply(B.add.pending(pending.data.name ?? '', pending.data.photos?.length ?? 0), {
+      reply_markup: new InlineKeyboard().text(B.add.resume, 'a:resume').text(B.add.fresh, 'a:fresh'),
+    })
+  }
+  return askStep(ctx, 'add.photos', {})
+}
+
+async function resumeAdd(ctx: Context) {
+  const id = await chatId(ctx)
+  const pending = await getPending(id)
+  await clearPending(id)
+  if (!pending) return askStep(ctx, 'add.photos', {})
+  const { state, data } = pending
+  if (state === 'add.photos') {
+    await setSession(id, state, { ...data, lastGroup: null })
+    const n = data.photos?.length ?? 0
+    return ctx.reply(n ? B.add.photoReceived(n) : B.add.photos, {
+      reply_markup: new InlineKeyboard().text(B.done, 'a:done').text(B.cancel, 'a:cancel'),
+    })
+  }
+  return askStep(ctx, state, data)
+}
+
+async function photoMenu(ctx: Context, pid: string) {
+  const p = await repo.getProduct(pid)
+  if (!p) return ctx.reply(B.products.gone)
+  const kb = new InlineKeyboard().text(B.card.photoReplace, `p:phrep:${pid}`)
+  if (p.images.length < MAX_PHOTOS) kb.text(B.card.photoAdd, `p:phadd:${pid}`)
+  kb.row()
+  if (p.images.length > 1) kb.text(B.card.photoDelete, `p:phdel:${pid}`)
+  kb.text(B.cancel, 'a:cancel')
+  return ctx.reply(B.card.photoMenu(p.images.length), { reply_markup: kb })
+}
+
+async function askDeletePhoto(ctx: Context, pid: string) {
+  const p = await repo.getProduct(pid)
+  if (!p) return ctx.reply(B.products.gone)
+  if (p.images.length <= 1) return ctx.reply(B.card.lastPhoto)
+  try {
+    // Показываем фото с номерами. Локальный Supabase Telegram не видит — тогда просто номера.
+    await ctx.replyWithMediaGroup(
+      p.images.map((img, i) => ({ type: 'photo' as const, media: storageUrl(img.path), caption: String(i + 1) })),
+    )
+  } catch {
+    /* фото недоступны Telegram */
+  }
+  const kb = new InlineKeyboard()
+  p.images.forEach((img, i) => {
+    kb.text(String(i + 1), `i:rm:${img.id}`)
+    if (i % 3 === 2) kb.row()
+  })
+  return ctx.reply(B.card.askDeletePhoto(p.images.length), { reply_markup: kb.row().text(B.cancel, 'a:cancel') })
 }
 
 async function listToKeyboard(items: { id: string; name: string; price: number; status: string; in_stock: boolean }[]) {
@@ -189,25 +263,27 @@ export function getBot() {
   bot.use(async (ctx, nextMw) => {
     const uid = ctx.from?.id
     if (!uid || !env.OWNER_TELEGRAM_IDS.includes(uid)) {
-      if (ctx.chat?.type === 'private') await ctx.reply(B.notOwner)
+      if (ctx.chat?.type === 'private' && uid) await ctx.reply(B.notOwner(uid), { parse_mode: 'HTML' })
       return
     }
     await nextMw()
   })
 
   bot.command(['start', 'menu'], async (ctx) => {
-    await setSession(ctx.chat.id, 'idle', {})
+    // Сбрасываем сценарий; незаконченный товар откладывается (см. leaveFlow)
+    await leaveFlow(ctx.chat.id)
     await ctx.reply(B.start, { parse_mode: 'HTML', reply_markup: mainMenu })
   })
   bot.command('help', (ctx) => ctx.reply(B.help, { reply_markup: mainMenu }))
 
   bot.hears(B.menu.help, (ctx) => ctx.reply(B.help, { reply_markup: mainMenu }))
-  bot.hears(B.menu.add, (ctx) => askStep(ctx, 'add.photos', {}))
+  bot.hears(B.menu.add, (ctx) => startAdd(ctx))
   bot.hears(B.menu.orders, async (ctx) => {
-    await setSession(ctx.chat.id, 'idle', {})
+    await leaveFlow(ctx.chat.id)
     return showOrders(ctx)
   })
   bot.hears(B.menu.products, async (ctx) => {
+    await leaveFlow(ctx.chat.id)
     await setSession(ctx.chat.id, 'search', {})
     const kb = new InlineKeyboard()
       .text(B.products.latest, 'l:latest')
@@ -318,10 +394,17 @@ export function getBot() {
     const arg = rest.join(':')
 
     if (scope === 'a') {
+      const required = addActionState[action]?.(arg)
+      if (required && s.state !== required) return ctx.reply(B.stale, { reply_markup: mainMenu })
       switch (action) {
         case 'cancel':
           await setSession(id, 'idle', {})
           return ctx.reply(B.cancelled, { reply_markup: mainMenu })
+        case 'resume':
+          return resumeAdd(ctx)
+        case 'fresh':
+          await clearPending(id)
+          return askStep(ctx, 'add.photos', {})
         case 'done': {
           const fresh = await getSession(id)
           const photos = (fresh.data.photos ?? []).slice(0, MAX_PHOTOS)
@@ -385,11 +468,20 @@ export function getBot() {
           await setSession(id, 'edit.description', { productId: pid })
           return ctx.reply(B.card.askDescription, { reply_markup: cancelKb })
         case 'photo':
-          await setSession(id, 'edit.photos', { productId: pid, photos: [], lastGroup: null })
-          return ctx.reply(B.card.askPhotos, {
+          return photoMenu(ctx, pid)
+        case 'phrep':
+        case 'phadd': {
+          const mode = action === 'phrep' ? 'replace' : 'append'
+          const free = MAX_PHOTOS - p.images.length
+          if (mode === 'append' && free <= 0) return ctx.reply(B.card.photosFull)
+          await setSession(id, 'edit.photos', { productId: pid, photos: [], lastGroup: null, photoMode: mode })
+          return ctx.reply(mode === 'replace' ? B.card.askPhotos : B.card.askPhotosAdd(free), {
             parse_mode: 'HTML',
             reply_markup: new InlineKeyboard().text(B.done, 'e:pdone').text(B.cancel, 'a:cancel'),
           })
+        }
+        case 'phdel':
+          return askDeletePhoto(ctx, pid)
         case 'stock':
           await repo.updateProduct(pid, { in_stock: !p.in_stock })
           return refreshCard(ctx, pid)
@@ -424,19 +516,35 @@ export function getBot() {
       }
     }
 
+    if (scope === 'i' && action === 'rm') {
+      const res = await repo.deleteImage(arg)
+      if (!res.ok) return ctx.reply(res.reason === 'last' ? B.card.lastPhoto : B.stale, { reply_markup: mainMenu })
+      await ctx.reply(B.card.photoDeleted, { reply_markup: mainMenu })
+      return sendProductCard(ctx, res.productId)
+    }
+
     if (scope === 'e' && action === 'pdone') {
+      if (s.state !== 'edit.photos') return ctx.reply(B.stale, { reply_markup: mainMenu })
       const fresh = await getSession(id)
-      const photos = (fresh.data.photos ?? []).slice(0, MAX_PHOTOS)
       const pid = fresh.data.productId
       if (!pid) return
-      if (photos.length === 0) return ctx.reply(B.add.noPhotos)
+      const product = await repo.getProduct(pid)
+      if (!product) return ctx.reply(B.products.gone)
+      const append = fresh.data.photoMode === 'append'
+      const limit = append ? MAX_PHOTOS - product.images.length : MAX_PHOTOS
+      const received = fresh.data.photos ?? []
+      const photos = received.slice(0, Math.max(limit, 0))
+      if (received.length === 0) return ctx.reply(B.add.noPhotos)
+      if (photos.length === 0) return ctx.reply(B.card.photosFull)
       await ctx.reply(B.add.uploading)
       const uploaded = []
       for (const fileId of photos) {
         uploaded.push(await uploadProductImage(pid, await downloadTelegramFile(env.TELEGRAM_BOT_TOKEN!, fileId)))
       }
-      await repo.replaceImages(pid, uploaded)
+      if (append) await repo.appendImages(pid, uploaded)
+      else await repo.replaceImages(pid, uploaded)
       repo.refreshSite()
+      if (append && received.length > photos.length) await ctx.reply(B.card.photosTrimmed(photos.length))
       await setSession(id, 'idle', {})
       await ctx.reply(B.card.saved, { reply_markup: mainMenu })
       return sendProductCard(ctx, pid)

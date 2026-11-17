@@ -135,6 +135,31 @@ export async function replaceImages(productId: string, images: { path: string; w
   await removeStorageFiles((old ?? []).map((o) => o.path).filter((p) => !p.startsWith('seed/')))
 }
 
+/** Добавляет фото в конец галереи товара. */
+export async function appendImages(productId: string, images: { path: string; width: number; height: number }[]) {
+  const { data: last } = await createAdminClient()
+    .from('product_images')
+    .select('sort')
+    .eq('product_id', productId)
+    .order('sort', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  await addImages(productId, images, (last?.sort ?? -1) + 1)
+}
+
+/** Удаляет одно фото. Единственное фото не удаляем — у товара на сайте должна быть картинка. */
+export async function deleteImage(imageId: string): Promise<{ ok: true; productId: string } | { ok: false; reason: 'gone' | 'last' }> {
+  const db = createAdminClient()
+  const { data: img } = await db.from('product_images').select('id, path, product_id').eq('id', imageId).maybeSingle()
+  if (!img) return { ok: false, reason: 'gone' }
+  const { count } = await db.from('product_images').select('id', { count: 'exact', head: true }).eq('product_id', img.product_id)
+  if ((count ?? 0) <= 1) return { ok: false, reason: 'last' }
+  await db.from('product_images').delete().eq('id', imageId)
+  if (!img.path.startsWith('seed/')) await removeStorageFiles([img.path])
+  refreshSite()
+  return { ok: true, productId: img.product_id }
+}
+
 type Patch = Partial<{
   name: string
   price: number

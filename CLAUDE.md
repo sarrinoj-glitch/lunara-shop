@@ -54,8 +54,9 @@ supabase start           # локальная БД (нужен colima/docker)
 supabase db reset        # применить миграции + seed.sql
 pnpm db:types            # сгенерировать types/database.ts
 pnpm seed:catalog        # загрузить 62 товара + фото
+pnpm bot:dev             # бот локально без вебхука (long polling), проверять с телефона
 pnpm bot:set-webhook     # зарегистрировать вебхук Telegram (нужен публичный URL)
-pnpm test:bot            # smoke-тест бота без Telegram (19 проверок)
+pnpm test:bot            # smoke-тест бота без Telegram (30 проверок)
 pnpm build:pages         # статическая сборка для GitHub Pages (с NEXT_PUBLIC_STATIC_EXPORT=1)
 ```
 

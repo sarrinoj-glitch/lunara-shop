@@ -44,7 +44,8 @@ export function productKeyboard(p: BotProduct) {
   if (p.status === 'draft') kb.text(B.card.publish, `p:pub:${p.id}`)
   else kb.text(p.status === 'hidden' ? B.card.show : B.card.hide, `p:vis:${p.id}`)
   kb.row().text(B.card.hit(p.is_hit), `p:hit:${p.id}`).text(B.card.isNew(p.is_new), `p:new:${p.id}`).row()
-  if (p.status === 'published') kb.url(B.card.open, productUrl(p.slug))
+  // Telegram отклоняет кнопки-ссылки на localhost — в локальном режиме кнопки нет
+  if (p.status === 'published' && publicEnv.siteUrl.startsWith('https://')) kb.url(B.card.open, productUrl(p.slug))
   kb.text(B.card.remove, `p:del:${p.id}`)
   return kb
 }
